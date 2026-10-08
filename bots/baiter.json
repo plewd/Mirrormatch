@@ -1,0 +1,27 @@
+{
+  "name": "baiter",
+  "version": 1,
+  "rules": [
+    {"if": [{"sensor": "enemy_cooldown", "ability": "dash", "op": ">", "value": 1.5}], "then": {"action": "set_mode", "mode": "aggressive"}},
+    {"if": [{"sensor": "in_mode", "mode": "aggressive"}, {"sensor": "enemy_ready", "ability": "dash"}], "then": {"action": "set_mode", "mode": "normal"}},
+    {"if": [{"sensor": "in_mode", "mode": "normal"}, {"sensor": "time_in_mode", "op": ">", "value": 2}, {"sensor": "chance", "value": 4}], "then": {"action": "set_mode", "mode": "baiting"}},
+    {"if": [{"sensor": "in_mode", "mode": "baiting"}, {"sensor": "time_in_mode", "op": ">", "value": 1.5}], "then": {"action": "set_mode", "mode": "normal"}},
+    {"if": [{"sensor": "threatened"}, {"not": {"sensor": "can_sidestep"}}], "then": {"action": "dash", "direction": "away_from_threat"}},
+    {"if": [{"sensor": "threatened"}, {"not": {"sensor": "can_sidestep"}}, {"sensor": "holding", "item": "shield"}], "then": {"action": "use_item", "aim": "lead"}},
+    {"if": [{"sensor": "threatened"}, {"not": {"sensor": "can_sidestep"}}, {"sensor": "holding", "item": "wall"}], "then": {"action": "use_item", "aim": "lead"}},
+    {"if": [{"sensor": "threatened"}], "then": {"action": "hold_fire"}},
+    {"if": [{"sensor": "in_mode", "mode": "aggressive"}, {"sensor": "in_range", "ability": "bolt"}], "then": {"action": "shoot", "aim": "lead"}},
+    {"if": [{"sensor": "in_mode", "mode": "baiting"}, {"sensor": "enemy_distance", "op": "<", "value": 520}], "then": {"action": "shoot", "aim": "direct"}},
+    {"if": [{"sensor": "in_range", "ability": "bolt"}, {"sensor": "chance", "value": 25}], "then": {"action": "shoot", "aim": "lead"}},
+    {"if": [{"not": {"sensor": "ready", "ability": "bolt"}}, {"sensor": "in_range", "ability": "item"}], "then": {"action": "use_item", "aim": "lead"}},
+    {"if": [{"sensor": "threatened"}], "then": {"action": "strafe"}},
+    {"if": [{"sensor": "in_mode", "mode": "aggressive"}, {"sensor": "enemy_distance", "op": ">", "value": 320}], "then": {"action": "approach"}},
+    {"if": [{"sensor": "in_mode", "mode": "baiting"}, {"sensor": "enemy_distance", "op": ">", "value": 450}], "then": {"action": "approach"}},
+    {"if": [{"sensor": "heal_up"}, {"sensor": "closer_to_heal"}], "then": {"action": "go_to_heal"}},
+    {"if": [{"not": {"sensor": "heal_up"}}, {"sensor": "heal_in", "op": "<", "value": 1.5}, {"sensor": "heal_distance", "op": "<", "value": 450}], "then": {"action": "go_to_heal"}},
+    {"if": [{"sensor": "closer_to_pickup"}, {"sensor": "pickup_distance", "op": "<", "value": 400}, {"not": {"sensor": "holding", "item": "any"}}], "then": {"action": "go_to_pickup"}},
+    {"if": [{"not": {"sensor": "in_range", "ability": "bolt"}}], "then": {"action": "approach"}},
+    {"if": [{"sensor": "enemy_distance", "op": "<", "value": 500}], "then": {"action": "strafe"}},
+    {"if": [], "then": {"action": "hold"}}
+  ]
+}

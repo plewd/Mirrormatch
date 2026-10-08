@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+models/
+web/vendor/
+web/build/
+*.swp
+*.swo
+.DS_Store
+.superpowers/

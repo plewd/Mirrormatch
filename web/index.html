@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mirrormatch</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Loading splash: a line sweeps down drawing the word, the reflection fades in, then it all fades out once booted. -->
+  <div id="splash" role="status" aria-label="Loading Mirrormatch">
+    <div class="splash-logo" aria-hidden="true">
+      <div class="splash-word-box">
+        <div class="splash-window"><span class="splash-word">Mirrormatch</span></div>
+        <i class="splash-line"></i>
+        <i class="splash-rest"></i>
+      </div>
+      <span class="splash-reflection">Mirrormatch</span>
+    </div>
+    <p id="splash-status"></p>
+  </div>
+  <header>
+    <h1 class="logo" aria-label="Mirrormatch">
+      <span class="logo-word">Mirrormatch</span>
+      <span class="logo-reflection" aria-hidden="true">Mirrormatch</span>
+    </h1>
+    <nav id="tabs">
+      <button data-tab="play" class="active">Play</button>
+      <button data-tab="watch">Watch</button>
+      <button data-tab="build">Build</button>
+      <button data-tab="tournament">Tournament</button>
+      <button data-tab="guide">Guide</button>
+    </nav>
+    <span id="sound-ctl">
+      <button id="sound-toggle" title="Sound on / off" aria-label="Mute" aria-pressed="false">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 9.5h3.2L12 5.5v13l-4.8-4H4z"/>
+          <path class="wave1" d="M15.2 9.6a3.4 3.4 0 0 1 0 4.8"/>
+          <path class="wave2" d="M17.8 7a7 7 0 0 1 0 10"/>
+          <path class="off" d="M16 9.5l5 5M21 9.5l-5 5"/>
+        </svg>
+      </button>
+      <input id="volume" type="range" min="0" max="1" step="0.05" value="0.6" aria-label="Volume">
+    </span>
+    <label id="gfx-label" class="hint">Graphics
+      <select id="gfx"><option value="polished">Polished</option><option value="classic">Classic</option></select>
+    </label>
+    <span id="status">Loading Python runtime…</span>
+  </header>
+
+  <main>
+    <section id="controls">
+      <div class="panel" data-panel="play">
+        <button id="play-back" class="plain" title="Back to the opponents (Esc)">← Opponents</button>
+        <span class="hint">Right-click to move · Q Bolt · W Dash · E use pickup · R restart · Esc opponents</span>
+      </div>
+      <div class="panel matchup" data-panel="watch" hidden>
+        <label class="side left" title="Left bot (blue)"><select id="watch-left" class="bot-select" aria-label="Left bot"></select><small class="side-tag"></small></label>
+        <span class="vs-badge" aria-hidden="true">VS</span>
+        <label class="side right" title="Right bot (red)"><select id="watch-right" class="bot-select" aria-label="Right bot"></select><small class="side-tag"></small></label>
+        <span class="sep"></span>
+        <span id="watch-difficulty" class="chips" role="group" aria-label="Difficulty"></span>
+        <span id="watch-difficulty-note" class="hint diff-note"></span>
+        <button id="watch-start" class="primary" disabled>Watch ▶</button>
+      </div>
+      <div class="panel shows" data-panel="play watch">
+        <span class="hint">Show</span>
+        <label class="tog"><input id="show-rules" type="checkbox" checked>rules</label>
+        <label class="tog" data-panel="watch" hidden><input id="show-decisions" type="checkbox" checked>decisions</label>
+        <label class="tog" data-panel="watch" hidden title="Each bot's delayed view: the shots it saw (dashed), the one it reads as coming at it (solid), and where it thinks the enemy is"><input id="show-seen" type="checkbox">what bots see</label>
+      </div>
+      <div class="panel files" data-panel="watch" hidden>
+        <span id="bot-file-msg" class="hint"></span>
+        <details class="menu" id="watch-menu">
+          <summary>Replays &amp; files ▾</summary>
+          <div class="menu-items">
+            <button id="replay-save" disabled title="Download this match as a replay file">Save this replay</button>
+            <button id="replay-link" disabled title="A link that replays this match for whoever opens it">Copy replay link</button>
+            <label class="menu-file">Load a replay… <input id="replay-file" type="file" accept=".json,application/json"></label>
+            <hr>
+            <label class="menu-file">Load bot files… <input id="bot-file" type="file" accept=".json,application/json" multiple></label>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <section id="lobby" hidden>
+      <h2>Pick an opponent</h2>
+      <p class="lead">Play any bot yourself, or build your own in <a href="#" data-lobby-build>Build</a> and it joins this list.</p>
+      <div id="lobby-shared" hidden>
+        <h3>Shared with you</h3>
+        <div class="lobby-shared-row">
+          <div id="lobby-shared-card" class="bot-grid"></div>
+          <div class="lobby-shared-actions">
+            <button id="shared-watch" class="plain" type="button">Watch it fight</button>
+            <button id="shared-build" class="plain" type="button">Open in Build</button>
+            <button id="shared-save" class="plain" type="button">Save to my bots</button>
+          </div>
+        </div>
+      </div>
+      <h3>Built-in</h3>
+      <div id="lobby-builtin" class="bot-grid"></div>
+      <h3>Your bots</h3>
+      <div id="lobby-yours" class="bot-grid"></div>
+      <div class="lobby-bar">
+        <span id="lobby-difficulty" class="chips" role="group" aria-label="Difficulty"></span>
+        <span id="lobby-difficulty-note" class="hint diff-note"></span>
+        <button id="lobby-play" class="primary" disabled>Play ▶</button>
+      </div>
+      <p class="hint keys"><kbd>Right-click</kbd> move <kbd>Q</kbd> Bolt <kbd>W</kbd> Dash <kbd>E</kbd> use pickup <kbd>R</kbd> restart <kbd>Esc</kbd> back to opponents</p>
+    </section>
+
+    <div id="stage">
+      <aside id="rules-0" class="rule-panel" hidden></aside>
+      <div class="stage-center">
+        <div id="timeline" hidden>
+          <button id="tl-play" class="plain" title="Play / pause (Space)">⏸</button>
+          <button id="tl-back" class="plain" title="Step back one tick (←)">◂</button>
+          <button id="tl-step" class="plain" title="Step forward one tick (→)">▸</button>
+          <input id="tl-range" type="range" min="0" max="0" value="0" step="1" aria-label="Timeline">
+          <span id="tl-time" class="hint"></span>
+          <span class="sep"></span>
+          <span id="watch-speed" class="chips" role="group" aria-label="Playback speed"></span>
+        </div>
+        <canvas id="arena" width="1200" height="856"></canvas>
+      </div>
+      <aside id="rules-1" class="rule-panel" hidden></aside>
+    </div>
+
+    <section id="builder" hidden>
+      <button id="ed-blocks-tab" class="edge-tab" type="button" title="Show the blocks" hidden>Blocks</button>
+      <div id="blockly"></div>
+      <aside id="ed-side">
+        <div class="ed-bar">
+          <details class="menu" id="ed-menu">
+            <summary>Bot ▾</summary>
+            <div class="menu-items">
+              <button id="ed-new">New bot</button>
+              <div class="menu-row">
+                <select id="ed-template"></select>
+                <button id="ed-load">Load</button>
+              </div>
+              <hr>
+              <button id="ed-save">Save to my bots</button>
+              <button id="ed-download">Download .json</button>
+              <button id="ed-share" title="A link that carries this bot: anyone who opens it can play, watch or edit it">Copy share link</button>
+              <label class="menu-file">Open a .json file… <input id="ed-file" type="file" accept=".json,application/json"></label>
+            </div>
+          </details>
+          <button id="ed-check" class="chip ok" title="Problems with this bot">✓ Ready</button>
+          <a href="#" class="guide-link" data-goto="guide-bots">? Guide</a>
+          <button id="ed-side-pin" class="pin" type="button" title="Keep this panel open" aria-pressed="false"></button>
+        </div>
+        <ul id="ed-problems" hidden></ul>
+
+        <section class="card">
+          <div class="card-head">
+            <h3>Preview</h3>
+            <label>vs <select id="ed-opponent"></select></label>
+          </div>
+          <canvas id="ed-canvas" width="1200" height="856"></canvas>
+          <div class="ed-group">
+            <button id="ed-preview" class="primary">▶ Preview</button>
+            <button id="ed-pause">Pause</button>
+            <select id="ed-speed" title="speed"><option value="0.5">½×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select>
+            <button id="ed-watch" title="Save this bot and watch it full size">⤢ Watch big</button>
+          </div>
+          <p id="ed-decision" class="hint">Press Preview to watch your bot fight. The blocks it's using light up as it plays.</p>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h3>Test</h3>
+            <label>games <select id="ed-games"><option>10</option><option selected>20</option><option>50</option><option>100</option></select></label>
+            <button id="ed-test" class="primary">Run test</button>
+          </div>
+          <p id="ed-result" class="hint">Plays quick games against the opponent above, alternating sides.</p>
+        </section>
+      </aside>
+      <button id="ed-side-tab" class="edge-tab" type="button" title="Show preview and test" hidden>Preview &amp; test</button>
+    </section>
+    <section id="tournament" hidden>
+      <div class="tn-setup">
+        <h2>Tournament</h2>
+        <p class="lead">Every bot you pick plays every other one. Sides alternate and everyone plays at the same difficulty.</p>
+        <div class="tn-form">
+          <div class="tn-field">
+            <span class="tn-field-label">Bots</span>
+            <span class="tn-quick">
+              <button type="button" class="link" data-tn-select="all">all</button>
+              <button type="button" class="link" data-tn-select="builtin">built-in</button>
+              <button type="button" class="link" data-tn-select="yours">yours</button>
+              <button type="button" class="link" data-tn-select="none">clear</button>
+            </span>
+          </div>
+          <div id="tn-bots" class="tn-pick"></div>
+          <div class="tn-field"><span class="tn-field-label">Games per pair</span></div>
+          <span id="tn-games" class="chips" role="group" aria-label="Games per pair"></span>
+          <div class="tn-field"><span class="tn-field-label">Difficulty</span></div>
+          <div class="tn-diff">
+            <span id="tn-difficulty" class="chips" role="group" aria-label="Difficulty"></span>
+            <span id="tn-difficulty-note" class="hint diff-note"></span>
+          </div>
+        </div>
+        <div class="tn-row tn-run-row"><button id="tn-run" class="primary">Run ▶</button></div>
+        <div id="tn-progress" hidden>
+          <div class="tn-row tn-progress-text"><b id="tn-phase">Running…</b><span id="tn-status" class="hint"></span><span id="tn-eta" class="hint"></span></div>
+          <div class="tn-bar"><b id="tn-bar"></b></div>
+        </div>
+      </div>
+      <div id="tn-results">
+        <p class="hint tn-empty">Pick some bots and press Run. Standings and head-to-head results fill in as games finish.</p>
+      </div>
+    </section>
+    <section id="guide" hidden>
+      <nav class="guide-toc">
+        <a href="#" data-goto="guide-basics">Basics</a>
+        <a href="#" data-goto="guide-abilities">Abilities</a>
+        <a href="#" data-goto="guide-bots">How bots think</a>
+        <a href="#" data-goto="guide-pitfalls">Pitfalls</a>
+        <a href="#" data-goto="guide-tips">Strategy tips</a>
+      </nav>
+      <article class="guide-body">
+        <h2 id="guide-basics">Basics</h2>
+        <ul>
+          <li><b>Win</b> by bringing the enemy to 0 HP (both start with <span data-info="champion_hp"></span>). After
+            <span data-info="time_limit"></span> s, whoever has more HP wins; equal HP is a draw.</li>
+          <li><b>Controls:</b> right-click (or hold) to walk; <kbd>Q</kbd> Bolt and <kbd>W</kbd> Dash toward the cursor;
+            <kbd>E</kbd> uses your pickup; <kbd>R</kbd> plays again. Watching: <kbd>Space</kbd> pauses,
+            <kbd>←</kbd>/<kbd>→</kbd> step one tick.</li>
+          <li><b>Casting roots you.</b> Most abilities have a short cast time during which you can't move or dash. That
+            window is when you're easiest to hit, and the main thing to play around.</li>
+          <li><b>Pickups</b> appear one at a time, first at <span data-info="pickup_first_spawn"></span> s, then every
+            <span data-info="pickup_interval"></span> s (at most <span data-info="pickup_max"></span> on the map, never two of
+            the same). Each one spawns exactly as far from you as from the enemy, so it's a fair race. You hold one, single
+            use. If both players touch one on the same tick, both get it.</li>
+          <li><b>The center heal</b> appears at <span data-info="heal_first_spawn"></span> s and
+            <span data-info="heal_respawn"></span> s after each time it's taken, for +<span data-info="heal_amount"></span> HP. Its
+            countdown ring is visible to both. You can take it at full HP just to deny it.</li>
+        </ul>
+
+        <h2 id="guide-abilities">Abilities</h2>
+        <p class="hint">Numbers come straight from the game's config, so they're always current.</p>
+        <div class="table-wrap"><table id="guide-ability-table"></table></div>
+
+        <h2 id="guide-bots">How bots think</h2>
+        <p class="rw-legend">Rule words below are colored like their blocks in Build: <span class="rw move">move</span> <span class="rw ability">ability</span> <span class="rw cond">condition</span> <span class="rw mode">mode</span></p>
+        <ul>
+          <li><b>Priority, not steps.</b> On each decision the bot checks its whole list at once, against one snapshot of
+            what it sees, and does the <span class="rw move">first matching move</span> and the <span class="rw ability">first matching ability</span>. Lower rules are ignored for that decision.</li>
+          <li><b>How often, and how late:</b> bots decide a few times a second and see the world slightly late, depending on
+            difficulty: <span id="guide-difficulty"></span>. That delay is what makes them beatable.</li>
+          <li><b>Moving and casting are separate channels.</b> One decision can <span class="rw move">strafe</span> <i>and</i> <span class="rw ability">shoot</span>.</li>
+          <li><b>Fall-through:</b> if a matching action can't happen (Bolt on cooldown, dash while rooted, empty pickup
+            slot), the next rule in that channel gets the turn. <span class="rw move">hold position</span> and <span class="rw ability">hold fire</span> always "happen", so
+            they stop the fall-through.</li>
+          <li><b>Modes</b> switch immediately: rules below a <span class="rw mode">switch to mode</span> already see the new mode. Every bot starts in
+            <span class="rw mode">normal</span>.</li>
+          <li><b>Chance</b> is re-rolled every decision, so <span class="rw cond">if 30% chance</span> flickers. For a random plan that sticks, use chance
+            to <span class="rw mode">switch to mode</span>, then act on <span class="rw cond">if my mode is …</span>.</li>
+          <li><b>Memory sensors</b> let a bot react to what happened, not just what it sees now: for example
+            <span class="rw cond">seconds since enemy used dash</span> or <span class="rw cond">seconds since I got hit</span>.</li>
+        </ul>
+
+        <h2 id="guide-pitfalls">Pitfalls</h2>
+        <ul>
+          <li><b>"Dodge above shoot" doesn't stop the shot.</b> They're in different channels. Add <span class="rw ability">hold fire</span> <span class="rw cond">if a shot is coming at me</span>,
+            above your <span class="rw ability">shoot</span> rule, or you'll start a cast (and get rooted) mid-dodge.</li>
+          <li><b>Committing too early:</b> a cast started one decision before a shot appears can't be undone. Shoot when the
+            enemy can't punish it: <span class="rw cond">if enemy's cooldown on bolt &gt; 0.3</span>, or <span class="rw cond">if enemy is casting</span>.</li>
+          <li><b>Shields expire</b> (<span data-ability="shield" data-field="duration"></span> s). Against slow shots, raise
+            them late: <span class="rw cond">if seconds until a hit &lt; 0.3</span>.</li>
+          <li><b>Out of range shots</b> are wasted cooldowns. Guard them with <span class="rw cond">if in range: bolt</span>.</li>
+          <li><b>Not sure what your bot is doing?</b> Use Preview: the blocks firing right now glow, and the line under it
+            says which rules won and how many fell through.</li>
+        </ul>
+
+        <h2 id="guide-tips">Strategy tips</h2>
+        <ul>
+          <li><b>Close range wins trades.</b> Up close, a Bolt arrives faster than anyone can react and step aside.</li>
+          <li><b>Bait the dash, then punish:</b> a straight shot from mid-range makes a careful opponent dash. Their dash
+            then has a <span data-ability="dash" data-field="cooldown"></span> s cooldown: rush in. (Load the <i>baiter</i>
+            starter to see one way.)</li>
+          <li><b>Combos:</b> Root, then Bolt the rooted target. Hook pulls them next to you and cancels their cast. Bolt
+            them point-blank.</li>
+          <li><b>Walls</b> block both sides' shots, so don't hide behind one you need to shoot through. Standing inside a
+            wall doesn't protect you.</li>
+          <li><b>Own the center</b> a second or two before the heal appears. The countdown is public.</li>
+        </ul>
+      </article>
+    </section>
+  </main>
+
+  <div id="toast" role="status" hidden></div>
+  <script src="vendor/blockly/blockly.min.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

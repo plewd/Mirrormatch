@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mirrormatch"
+version = "0.1.0"
+description = "1v1 skillshot arena with scripted and learned bots"
+requires-python = ">=3.11"
+dependencies = ["numpy>=1.26", "pygame>=2.5"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+rl = ["gymnasium>=0.29", "stable-baselines3>=2.3"]
+
+[tool.setuptools.packages.find]
+include = ["arena*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,15 @@
+{
+  "name": "leader (rules)",
+  "version": 1,
+  "rules": [
+    {"if": [{"sensor": "threat_time", "op": "<", "value": 0.3}, {"sensor": "holding", "item": "shield"}], "then": {"action": "use_item", "aim": "lead"}},
+    {"if": [{"sensor": "threat_time", "op": "<", "value": 0.3}, {"sensor": "holding", "item": "wall"}], "then": {"action": "use_item", "aim": "lead"}},
+    {"if": [{"sensor": "in_range", "ability": "bolt"}], "then": {"action": "shoot", "aim": "lead"}},
+    {"if": [{"not": {"sensor": "ready", "ability": "bolt"}}, {"sensor": "in_range", "ability": "item"}], "then": {"action": "use_item", "aim": "lead"}},
+    {"if": [{"sensor": "heal_up"}, {"sensor": "closer_to_heal"}], "then": {"action": "go_to_heal"}},
+    {"if": [{"not": {"sensor": "heal_up"}}, {"sensor": "heal_in", "op": "<", "value": 1.5}, {"sensor": "heal_distance", "op": "<", "value": 450}], "then": {"action": "go_to_heal"}},
+    {"if": [{"sensor": "closer_to_pickup"}, {"sensor": "pickup_distance", "op": "<", "value": 400}, {"not": {"sensor": "holding", "item": "any"}}], "then": {"action": "go_to_pickup"}},
+    {"if": [{"not": {"sensor": "in_range", "ability": "bolt"}}], "then": {"action": "approach"}},
+    {"if": [], "then": {"action": "hold"}}
+  ]
+}
