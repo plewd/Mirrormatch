@@ -193,7 +193,7 @@ function backToLobby() {
   $("replay-save").disabled = true;
   $("replay-link").disabled = true;
   playOnScreen = false;
-  setStatus("Ready");
+  setStatus("");  // idle: nothing to say (loading has the splash; matches and errors still show here)
   layoutRulePanels();
   updatePlayView();
   document.querySelector('#lobby .bot-card[aria-pressed="true"]')?.focus();
@@ -605,7 +605,7 @@ async function boot() {
   window.__mirrormatchEditor = editorDebug;
   window.__mirrormatchRenderer = renderer;
   window.__mirrormatchReplay = { save: () => session && session.replay(view.names[0], view.names[1]), load: (text) => start({ ...JSON.parse(text), speed: 8 }, text) };
-  setStatus("Ready");
+  setStatus("");  // idle: nothing to say (loading has the splash; matches and errors still show here)
   booted = true;
   hideSplash();
 
