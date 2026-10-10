@@ -18,7 +18,7 @@ function store(key, value) {
 export class Lobby {
   /** botOptions() lists {value, label} like the dropdowns; onPlay(value, difficulty) starts a match;
    *  onBuild() opens the Build tab. */
-  constructor({ botOptions, difficulties, onPlay, onBuild, onWatchShared, onBuildShared, onSaveShared }) {
+  constructor({ botOptions, difficulties, onPlay, onBuild, onBuildShared, onSaveShared }) {
     this.botOptions = botOptions;
     this.onPlay = onPlay;
     this.selected = load(PICK_KEY, "builtin:dodger");
@@ -37,7 +37,6 @@ export class Lobby {
       chips.append(b);
     }
     $("lobby-play").addEventListener("click", () => this.play());
-    $("shared-watch").addEventListener("click", () => onWatchShared(this.sharedValue));
     $("shared-build").addEventListener("click", () => onBuildShared(this.sharedValue));
     $("shared-save").addEventListener("click", () => onSaveShared(this.sharedValue));
     for (const link of document.querySelectorAll("[data-lobby-build]")) {
@@ -61,7 +60,7 @@ export class Lobby {
       card.setAttribute("aria-pressed", String(card.dataset.value === value));
     }
     const opt = this.botOptions().find((o) => o.value === value);
-    $("lobby-play").textContent = `Play ${opt ? opt.label : "?"} ▶`;
+    $("lobby-play").textContent = `Play ${opt ? opt.label.replace(/ \(yours\)$/, "") : "?"} ▶`;
   }
 
   play() {
@@ -73,13 +72,11 @@ export class Lobby {
     const opts = this.botOptions();
     const builtin = byStrength(opts.filter((o) => !o.value.startsWith("upload:") && !o.value.startsWith("shared:")));
     const yours = opts.filter((o) => o.value.startsWith("upload:"));
+    // A bot from a share link leads "Your bots" (dotted outline), selected when it first appears.
     const sharedOpt = opts.find((o) => o.value.startsWith("shared:"));
-    $("lobby-shared").hidden = !sharedOpt;
-    if (sharedOpt) {
-      $("lobby-shared-card").replaceChildren(this.card(sharedOpt, { blurb: "Someone shared this bot with you" }));
-      if (this.sharedValue !== sharedOpt.value) this.selected = sharedOpt.value;  // a fresh share starts selected
-      this.sharedValue = sharedOpt.value;
-    }
+    $("lobby-shared-note").hidden = !sharedOpt;
+    if (sharedOpt && this.sharedValue !== sharedOpt.value) this.selected = sharedOpt.value;
+    this.sharedValue = sharedOpt ? sharedOpt.value : null;
 
     $("lobby-builtin").replaceChildren(...builtin.map((o) => this.card(o, BOT_INFO[o.value])));
     const add = document.createElement("button");
@@ -87,7 +84,9 @@ export class Lobby {
     add.className = "bot-card new";
     add.innerHTML = "<b>＋ Build a bot</b><span>Snap rules together from blocks</span>";
     add.addEventListener("click", () => document.querySelector("[data-lobby-build]").click());
-    $("lobby-yours").replaceChildren(...yours.map((o) => this.card(o, { blurb: "Yours, from Build" })), add);
+    const sharedCard = sharedOpt ? [this.card(sharedOpt, { blurb: "Shared with you" })] : [];
+    for (const c of sharedCard) c.classList.add("shared");
+    $("lobby-yours").replaceChildren(...sharedCard, ...yours.map((o) => this.card(o, { blurb: "Yours, from Build" })), add);
 
     if (!opts.some((o) => o.value === this.selected)) this.selected = "builtin:dodger";
     this.select(this.selected);

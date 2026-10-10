@@ -448,6 +448,9 @@ function saveShared() {
   let label = shared.label;
   for (let k = 2; uploaded[label] && uploaded[label] !== shared.spec; k++) label = `${shared.label} (${k})`;
   saveBot(label, shared.spec);
+  shared = null;  // it's an ordinary saved bot now: one card, not two
+  fillBotSelects();
+  lobby.select(`upload:${label}`);
   toast(`Saved "${label}" to your bots.`);
 }
 
@@ -576,11 +579,6 @@ async function boot() {
     difficulties: info.difficulties,
     onPlay: (opponent, difficulty) => startPlay(opponent, difficulty),
     onBuild: () => showTab("build"),
-    onWatchShared: (value) => {
-      showTab("watch");
-      $("watch-left").value = value;
-      updateSideTags();
-    },
     onBuildShared: () => { showTab("build"); openInEditor(JSON.parse(shared.spec)); },
     onSaveShared: saveShared,
   });

@@ -448,10 +448,8 @@ html.locked, html.locked body { overflow: hidden; overscroll-behavior: none; }
 #timeline .chips .chip { padding: 2px 8px; font-size: 12px; }
 
 /* Share links: the "Shared with you" lobby row and the toast that confirms a copied link. */
-.lobby-shared-row { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
-#lobby-shared-card { flex: 0 1 260px; }
-#lobby-shared-card .bot-card { border-color: var(--gold); }
-.lobby-shared-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.bot-card.shared { border: 2px dotted var(--mode-text); }  /* opened from a share link; stays dotted when selected */
+#lobby-shared-note { margin: 8px 2px 0; }
 #toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 90;
          max-width: min(640px, calc(100vw - 32px)); display: flex; flex-direction: column; gap: 8px; padding: 10px 14px;
          background: #232834; border: 1px solid #3a4152; border-radius: 10px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }

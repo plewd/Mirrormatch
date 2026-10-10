@@ -4,6 +4,21 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Mirrormatch</title>
+  <meta name="description" content="A 1v1 skillshot duel in your browser. Play against bots, or build your own from rule blocks and share it with a link.">
+  <meta name="theme-color" content="#12141a">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <!-- Link previews (Discord, iMessage, Slack, X...). The fragment of a share link (#bot=...) never
+       reaches a crawler, so every link shares this one card. -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Mirrormatch">
+  <meta property="og:title" content="Mirrormatch: a 1v1 skillshot duel">
+  <meta property="og:description" content="Play against bots in your browser, or build your own from rule blocks and share it with a link.">
+  <meta property="og:url" content="https://plewd.github.io/Mirrormatch/">
+  <meta property="og:image" content="https://plewd.github.io/Mirrormatch/preview.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="The Mirrormatch logo beside a blue and a red champion trading shots">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -88,21 +103,13 @@
     <section id="lobby" hidden>
       <h2>Pick an opponent</h2>
       <p class="lead">Play any bot yourself, or build your own in <a href="#" data-lobby-build>Build</a> and it joins this list.</p>
-      <div id="lobby-shared" hidden>
-        <h3>Shared with you</h3>
-        <div class="lobby-shared-row">
-          <div id="lobby-shared-card" class="bot-grid"></div>
-          <div class="lobby-shared-actions">
-            <button id="shared-watch" class="plain" type="button">Watch it fight</button>
-            <button id="shared-build" class="plain" type="button">Open in Build</button>
-            <button id="shared-save" class="plain" type="button">Save to my bots</button>
-          </div>
-        </div>
-      </div>
       <h3>Built-in</h3>
       <div id="lobby-builtin" class="bot-grid"></div>
       <h3>Your bots</h3>
       <div id="lobby-yours" class="bot-grid"></div>
+      <p id="lobby-shared-note" class="hint" hidden>The dotted card is a bot someone shared with you (this visit only):
+        <button type="button" class="link" id="shared-save">save it to your bots</button> ·
+        <button type="button" class="link" id="shared-build">open it in Build</button></p>
       <div class="lobby-bar">
         <span id="lobby-difficulty" class="chips" role="group" aria-label="Difficulty"></span>
         <span id="lobby-difficulty-note" class="hint diff-note"></span>
