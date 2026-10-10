@@ -9,6 +9,7 @@ import { RulePanel } from "./rulepanel.js";
 import { Sound } from "./audio.js";
 import { Lobby } from "./lobby.js";
 import { botKind, explainDifficulty } from "./labels.js";
+import { actionForKey, initSettings, settings } from "./settings.js";
 
 const sound = new Sound();
 
@@ -382,13 +383,13 @@ function setupInput() {
   canvas.addEventListener("contextmenu", (e) => e.preventDefault());
   canvas.addEventListener("mousedown", (e) => {
     mouse = renderer.toWorld(e.clientX, e.clientY);
-    if (e.button === 2 && view?.human) {
+    if (e.button === settings.moveButton && view?.human) {
       rightDown = true;
       command({ move: mouse });
       view.moveMarker = mouse;
     }
   });
-  window.addEventListener("mouseup", (e) => { if (e.button === 2) rightDown = false; });
+  window.addEventListener("mouseup", (e) => { if (e.button === settings.moveButton) rightDown = false; });
   canvas.addEventListener("mousemove", (e) => {
     mouse = renderer.toWorld(e.clientX, e.clientY);
     if (rightDown && view?.human) { command({ move: mouse }); view.moveMarker = mouse; }
@@ -398,15 +399,15 @@ function setupInput() {
     if (lobby && lobby.visible && lobby.key(e)) { e.preventDefault(); return; }
     const key = e.key.toLowerCase();
     if (e.key === "Escape" && currentTab === "play" && playOnScreen) { backToLobby(); return; }
-    if (key === "r" && lastSetup && snap?.done) { start(lastSetup); return; }
+    const action = actionForKey(e.key);  // rebindable in Settings
+    if (action === "restart" && lastSetup && snap?.done) { start(lastSetup); return; }
     if (timeline && !$("stage").hidden) {  // spectating: playback keys
       if (key === " ") { togglePause(); e.preventDefault(); return; }
       if (e.key === "ArrowRight") { $("tl-step").click(); e.preventDefault(); return; }
       if (e.key === "ArrowLeft") { $("tl-back").click(); e.preventDefault(); return; }
     }
     if (!session || !view?.human || snap?.done) return;
-    const cast = { q: "bolt", w: "dash", e: "item" }[key];
-    if (cast) { command({ cast, aim: mouse }); e.preventDefault(); }
+    if (["bolt", "dash", "item"].includes(action)) { command({ cast: action, aim: mouse }); e.preventDefault(); }
   });
 }
 
@@ -538,12 +539,17 @@ async function boot() {
   let style = "polished";
   try { style = localStorage.getItem("mirrormatch.graphics") || style; } catch { /* storage unavailable */ }
   renderer.style = style;
-  $("gfx").value = style;
-  $("gfx").addEventListener("change", (e) => {
-    renderer.style = e.target.value;
-    renderer.resetEffects();
-    try { localStorage.setItem("mirrormatch.graphics", e.target.value); } catch { /* keep for this visit */ }
+  initSettings({
+    get: () => renderer.style,
+    set: (value) => {
+      renderer.style = value;
+      renderer.resetEffects();
+      try { localStorage.setItem("mirrormatch.graphics", value); } catch { /* keep for this visit */ }
+    },
   });
+  for (const link of document.querySelectorAll("[data-open-settings]")) {
+    link.addEventListener("click", (e) => { e.stopPropagation(); $("settings-btn").click(); });
+  }
   requestAnimationFrame(frame);
 
   const pyodide = await loadPyodide({ indexURL: new URL("vendor/pyodide/", location.href).href });

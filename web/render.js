@@ -2,6 +2,7 @@
 //
 // Two styles: "classic" is the original flat look; "polished" adds cosmetic layers
 // on top (particles, icons, glows, shadows) without changing what anything means.
+import { label } from "./settings.js";
 import { Effects } from "./effects.js";
 import { drawIcon } from "./icons.js";
 import { actionShort } from "./labels.js";
@@ -20,7 +21,6 @@ const C = {
 const BIG_PROJECTILE = 50;  // above this radius, polished draws a translucent wave instead of a solid ball
 const CAN_HIT = ["boomerang", "root", "hook", "blast"];  // items with a hit rate (wall and shield have none)
 const CORE = { root: C.root, boomerang: C.pickup, hook: C.wall };
-const KEYS = ["Q", "W"];
 
 export class Renderer {
   constructor(canvas, info) {
@@ -402,10 +402,10 @@ export class Renderer {
     let bx = 14;
     this.info.loadout.forEach((aid, slot) => {
       const cd = left.cooldowns[aid];
-      this.slot(bx, `${KEYS[slot]} ${aid}${cd.left > 0 ? " " + cd.left.toFixed(1) + "s" : ""}`, cd.left <= 0, 1 - cd.frac, C.players[0]);
+      this.slot(bx, `${label(aid)} ${aid}${cd.left > 0 ? " " + cd.left.toFixed(1) + "s" : ""}`, cd.left <= 0, 1 - cd.frac, C.players[0]);
       bx += 130;
     });
-    this.slot(bx, left.item ? `E ${left.item}` : "E –", !!left.item, left.item ? 1 : 0, C.pickup);
+    this.slot(bx, left.item ? `${label("item")} ${left.item}` : `${label("item")} –`, !!left.item, left.item ? 1 : 0, C.pickup);
     if (this.polished && left.item) drawIcon(g, left.item, bx + 108, 39, 7, C.bg);
 
     g.textAlign = "right";
@@ -452,7 +452,7 @@ export class Renderer {
     g.fillText(title, W / 2, top);
     g.fillStyle = C.text;
     g.font = "16px system-ui, sans-serif";
-    g.fillText(view.human ? "R: play again  ·  Esc: opponents" : "R: play again", W / 2, top + 54);
+    g.fillText(view.human ? `${label("restart")}: play again  ·  Esc: opponents` : `${label("restart")}: play again`, W / 2, top + 54);
     if (withStats) this.drawStats(snap.stats, view, top + 100);
     g.restore();
   }

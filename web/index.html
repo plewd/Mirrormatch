@@ -58,9 +58,27 @@
       </button>
       <input id="volume" type="range" min="0" max="1" step="0.05" value="0.6" aria-label="Volume">
     </span>
-    <label id="gfx-label" class="hint">Graphics
-      <select id="gfx"><option value="polished">Polished</option><option value="classic">Classic</option></select>
-    </label>
+    <button id="settings-btn" type="button" title="Settings" aria-label="Settings" aria-expanded="false" aria-controls="settings-panel">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>
+      </svg>
+    </button>
+    <div id="settings-panel" class="settings-panel" role="dialog" aria-label="Settings" hidden>
+      <h3>Controls</h3>
+      <div class="set-row"><span>Move</span>
+        <span id="set-move" class="chips"><button type="button" class="chip" data-value="2">Right-click</button><button type="button" class="chip" data-value="0">Left-click</button></span></div>
+      <div class="set-row"><span>Bolt</span><button type="button" class="keycap" data-bind="bolt"></button></div>
+      <div class="set-row"><span>Dash</span><button type="button" class="keycap" data-bind="dash"></button></div>
+      <div class="set-row"><span>Use pickup</span><button type="button" class="keycap" data-bind="item"></button></div>
+      <div class="set-row"><span>Play again</span><button type="button" class="keycap" data-bind="restart"></button></div>
+      <p id="set-hint" class="hint">Click a key, then press the new one. Esc cancels.</p>
+      <h3>Graphics</h3>
+      <div class="set-row"><span>Style</span>
+        <span id="set-graphics" class="chips"><button type="button" class="chip" data-value="polished">Polished</button><button type="button" class="chip" data-value="classic">Classic</button></span></div>
+      <button type="button" class="link" id="set-reset">Reset controls to defaults</button>
+    </div>
     <span id="status">Loading Python runtime…</span>
   </header>
 
@@ -68,7 +86,7 @@
     <section id="controls">
       <div class="panel" data-panel="play">
         <button id="play-back" class="plain" title="Back to the opponents (Esc)">← Opponents</button>
-        <span class="hint">Right-click to move · Q Bolt · W Dash · E use pickup · R restart · Esc opponents</span>
+        <span class="hint"><span data-move>Right-click</span> to move · <span data-key="bolt">Q</span> Bolt · <span data-key="dash">W</span> Dash · <span data-key="item">E</span> use pickup · <span data-key="restart">R</span> restart · Esc opponents</span>
       </div>
       <div class="panel matchup" data-panel="watch" hidden>
         <label class="side left" title="Left bot (blue)"><select id="watch-left" class="bot-select" aria-label="Left bot"></select><small class="side-tag"></small></label>
@@ -115,7 +133,7 @@
         <span id="lobby-difficulty-note" class="hint diff-note"></span>
         <button id="lobby-play" class="primary" disabled>Play ▶</button>
       </div>
-      <p class="hint keys"><kbd>Right-click</kbd> move <kbd>Q</kbd> Bolt <kbd>W</kbd> Dash <kbd>E</kbd> use pickup <kbd>R</kbd> restart <kbd>Esc</kbd> back to opponents</p>
+      <p class="hint keys"><kbd data-move>Right-click</kbd> move <kbd data-key="bolt">Q</kbd> Bolt <kbd data-key="dash">W</kbd> Dash <kbd data-key="item">E</kbd> use pickup <kbd data-key="restart">R</kbd> restart <kbd>Esc</kbd> back to opponents <button type="button" class="link" data-open-settings>change keys</button></p>
     </section>
 
     <div id="stage">
@@ -237,8 +255,8 @@
         <ul>
           <li><b>Win</b> by bringing the enemy to 0 HP (both start with <span data-info="champion_hp"></span>). After
             <span data-info="time_limit"></span> s, whoever has more HP wins; equal HP is a draw.</li>
-          <li><b>Controls:</b> right-click (or hold) to walk; <kbd>Q</kbd> Bolt and <kbd>W</kbd> Dash toward the cursor;
-            <kbd>E</kbd> uses your pickup; <kbd>R</kbd> plays again. Watching: <kbd>Space</kbd> pauses,
+          <li><b>Controls:</b> <span data-move="lower">right-click</span> (or hold) to walk; <kbd data-key="bolt">Q</kbd> Bolt and <kbd data-key="dash">W</kbd> Dash toward the cursor;
+            <kbd data-key="item">E</kbd> uses your pickup; <kbd data-key="restart">R</kbd> plays again. Change keys under ⚙ (top right). Watching: <kbd>Space</kbd> pauses,
             <kbd>←</kbd>/<kbd>→</kbd> step one tick.</li>
           <li><b>Casting roots you.</b> Most abilities have a short cast time during which you can't move or dash. That
             window is when you're easiest to hit, and the main thing to play around.</li>

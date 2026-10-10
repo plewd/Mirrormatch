@@ -477,3 +477,20 @@ html.locked, html.locked body { overflow: hidden; overscroll-behavior: none; }
 .explain-rules li { display: flex; gap: 8px; line-height: 1.4; }
 .explain-num { flex: 0 0 18px; color: var(--dim); text-align: right; font-variant-numeric: tabular-nums; }
 .explain-rules li.dead { opacity: 0.5; text-decoration: line-through; }
+
+/* Settings: a ⚙ button in the header and a small panel under it. */
+#settings-btn { display: inline-flex; align-items: center; padding: 4px; border: 0; border-radius: 6px; background: none;
+                color: var(--dim); cursor: pointer; }
+#settings-btn:hover, #settings-btn[aria-expanded="true"] { color: var(--text); }
+.settings-panel { position: fixed; top: 56px; right: 16px; z-index: 60; width: 300px; padding: 12px 14px 14px;
+                  background: #1c2028; border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 12px 34px rgba(0, 0, 0, 0.55); }
+.settings-panel[hidden] { display: none; }
+.settings-panel h3 { margin: 6px 0 8px; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim); }
+.settings-panel h3:not(:first-child) { margin-top: 14px; }
+.set-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 6px 0; font-size: 13.5px; }
+.keycap { min-width: 64px; font: 600 13px ui-monospace, monospace; color: var(--text); background: var(--panel); cursor: pointer;
+          border: 1px solid var(--line); border-bottom-width: 3px; border-radius: 6px; padding: 4px 10px; }
+.keycap:hover { border-color: #4a5468; }
+.keycap.listening { border-color: var(--blue); color: var(--blue); font-family: inherit; font-weight: 500; }
+#set-hint { margin: 8px 0 0; font-size: 12px; min-height: 2.4em; }
+#set-reset { margin-top: 12px; font-size: 12.5px; }

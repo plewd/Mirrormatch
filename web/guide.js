@@ -2,6 +2,7 @@
 // config (via arena_info), so the guide can't drift when stats are rebalanced.
 import { drawIcon } from "./icons.js";
 import { difficultyText } from "./labels.js";
+import { label } from "./settings.js";
 
 const PICKUP_GOLD = "#fac850";  // the pickup color on the map (render.js C.pickup)
 
@@ -21,7 +22,7 @@ const fmt = (v, unit = "") => (v ? `${Number.isInteger(v) ? v : v.toFixed(2).rep
 function abilityRow(name, st, info) {
   // Your two keys are always there; pickups get their map icon and a gold tag.
   const always = info.loadout.includes(name);
-  const badge = always ? `<kbd>${name === "bolt" ? "Q" : "W"}</kbd>` : `<canvas class="ab-icon" data-icon="${name}" width="40" height="40"></canvas>`;
+  const badge = always ? `<kbd data-key="${name}">${label(name)}</kbd>` : `<canvas class="ab-icon" data-icon="${name}" width="40" height="40"></canvas>`;
   const kind = always ? `<span class="ab-tag">always</span>` : `<span class="ab-tag pickup">pickup · E</span>`;
   const reach = name === "dash" ? fmt(st.range, " u") : st.speed ? `${fmt(st.range, " u")} at ${fmt(st.speed)} u/s` :
     st.range ? `placed within ${fmt(st.range, " u")}` : "–";
