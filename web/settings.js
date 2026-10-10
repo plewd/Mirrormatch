@@ -128,6 +128,21 @@ export function initSettings(graphicsStyle) {
     listening = null;
     changed();
   }, true);
+  // "Install as an app", when the browser offers it (Chrome and Edge; see sw.js).
+  let installPrompt = null;
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    installPrompt = e;
+    $("set-install").hidden = false;
+  });
+  window.addEventListener("appinstalled", () => { installPrompt = null; $("set-install").hidden = true; });
+  $("set-install-btn").addEventListener("click", async () => {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    await installPrompt.userChoice;
+    installPrompt = null;
+    $("set-install").hidden = true;
+  });
   refreshHints();
   renderPanel();
 }

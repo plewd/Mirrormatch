@@ -7,6 +7,8 @@
   <meta name="description" content="A 1v1 skillshot duel in your browser. Play against bots, or build your own from rule blocks and share it with a link.">
   <meta name="theme-color" content="#12141a">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icon-192.png">
   <!-- Link previews (Discord, iMessage, Slack, X...). The fragment of a share link (#bot=...) never
        reaches a crawler, so every link shares this one card. -->
   <meta property="og:type" content="website">
@@ -77,6 +79,10 @@
       <h3>Graphics</h3>
       <div class="set-row"><span>Style</span>
         <span id="set-graphics" class="chips"><button type="button" class="chip" data-value="polished">Polished</button><button type="button" class="chip" data-value="classic">Classic</button></span></div>
+      <div id="set-install" hidden>
+        <h3>App</h3>
+        <div class="set-row"><span>Use it like an app, offline too</span><button type="button" class="plain" id="set-install-btn">Install</button></div>
+      </div>
       <button type="button" class="link" id="set-reset">Reset controls to defaults</button>
     </div>
     <span id="status">Loading Python runtime…</span>

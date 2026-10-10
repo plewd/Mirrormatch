@@ -642,6 +642,9 @@ async function boot() {
   if (shareError) { setStatus(shareError, true); toast(shareError); }
 }
 
+// Offline play and "install as an app" (web/sw.js). Failure just means no offline support.
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+
 boot().catch((err) => {
   console.error(err);
   setStatus(`Failed to start: ${err.message}`, true);

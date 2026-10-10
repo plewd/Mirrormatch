@@ -97,12 +97,19 @@ def build() -> None:
     starters = {p.stem: json.loads(p.read_text()) for p in sorted(BOTS.glob("*.json"))}
     (BUILD / "bots.json").write_text(json.dumps(starters, indent=1))
     (BUILD / "vocab.json").write_text(json.dumps(vocabulary(), indent=1))
+    # What the service worker (web/sw.js) saves for offline play: every file the page can load.
+    web = ROOT / "web"
+    skip = {"sw.js", "node_check.mjs", "build/files.json"}
+    files = sorted(p.relative_to(web).as_posix() for p in web.rglob("*")
+                   if p.is_file() and not p.name.startswith((".", "_")))
+    (BUILD / "files.json").write_text(json.dumps([f for f in files if f not in skip], indent=1))
 
 
 class Handler(http.server.SimpleHTTPRequestHandler):
     extensions_map = {
         **http.server.SimpleHTTPRequestHandler.extensions_map,
         ".wasm": "application/wasm", ".mjs": "text/javascript", ".js": "text/javascript", ".json": "application/json",
+        ".webmanifest": "application/manifest+json",
     }
 
     def end_headers(self) -> None:

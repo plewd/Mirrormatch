@@ -64,6 +64,10 @@ def test_bundle_has_the_sim_but_not_the_desktop_or_training_code():
     assert sorted(n.split("/")[1] for n in names if n.startswith("policies/")) == exported
     assert "leader" in json.loads((web.BUILD / "bots.json").read_text())
     assert "actions" in json.loads((web.BUILD / "vocab.json").read_text())
+    offline = json.loads((web.BUILD / "files.json").read_text())  # what sw.js saves for offline play
+    assert {"index.html", "app.js", "style.css", "manifest.webmanifest", "build/arena.zip"} <= set(offline)
+    assert "sw.js" not in offline and "build/files.json" not in offline
+    assert all((web.ROOT / "web" / f).is_file() for f in offline)
 
 
 @pytest.mark.skipif(shutil.which("node") is None or not (web.VENDOR / "pyodide" / "pyodide.mjs").exists(),
