@@ -283,6 +283,7 @@ class ActionDef:
     help: str
     params: dict[str, Callable[[GameConfig], tuple[str, ...]]]
     run: Callable[..., object]  # returns Vec2 / Cast, KEEP, or None (can't, fall through)
+    can_fail: bool = False  # True if it can return None (then the next rule in the channel gets the turn)
 
 
 def _away_from(ctx: Context, frm: Vec2, step: float = STEP) -> Vec2:
@@ -376,16 +377,16 @@ ACTIONS: dict[str, ActionDef] = {
     "retreat": ActionDef("move", "Walk away from the enemy.", {}, lambda ctx: _away_from(ctx, ctx.obs.enemy.pos)),
     "strafe": ActionDef("move", "Step sideways: out of an incoming projectile's path, or around the enemy.", {}, _strafe),
     "go_to_pickup": ActionDef("move", "Walk to the nearest pickup (doesn't match if there is none).", {},
-                              lambda ctx: ctx.nearest_pickup),
+                              lambda ctx: ctx.nearest_pickup, can_fail=True),
     "go_to_heal": ActionDef("move", "Walk to the center heal spot (works before it appears, too).", {},
                             lambda ctx: heal_spot(ctx.config)),
     "hold": ActionDef("move", "Stand still.", {}, _hold),
     "wander": ActionDef("move", "Walk to random points.", {}, _wander),
     "shoot": ActionDef("ability", "Fire Bolt at the enemy, leading their movement or straight at them.",
-                       {"aim": lambda cfg: AIM_CHOICES}, _shoot),
-    "dash": ActionDef("ability", "Dash in a direction.", {"direction": lambda cfg: DASH_CHOICES}, _dash),
+                       {"aim": lambda cfg: AIM_CHOICES}, _shoot, can_fail=True),
+    "dash": ActionDef("ability", "Dash in a direction.", {"direction": lambda cfg: DASH_CHOICES}, _dash, can_fail=True),
     "use_item": ActionDef("ability", "Use the held pickup, aimed sensibly for what it is.",
-                          {"aim": lambda cfg: AIM_CHOICES}, _use_item),
+                          {"aim": lambda cfg: AIM_CHOICES}, _use_item, can_fail=True),
     "hold_fire": ActionDef("ability", "Cast nothing (stops lower ability rules).", {}, lambda ctx: KEEP),
     "set_mode": ActionDef("mode", "Switch your bot's mode. Takes effect right away for the rules below.",
                           {"mode": lambda cfg: MODES}, lambda ctx, mode: _set_mode(ctx, mode)),
@@ -479,6 +480,95 @@ def validate(spec, config: GameConfig = DEFAULT_CONFIG) -> list[str]:
         else:
             _check_params(where, action, ACTIONS[name].params, config, errors, {"action"})
     return errors
+
+
+# ---- explaining a bot ------------------------------------------------------------
+#
+# Static checks behind Build's "What your bot does" panel. A bot runs the first matching
+# rule per channel, so an earlier rule that always acts whenever a later one would match
+# makes the later one dead. Rule numbers are 1-based, as in the editor.
+
+CHANNEL_NAMES = {"move": "moving", "ability": "abilities", "mode": "modes"}
+MODE_SENSORS = ("in_mode", "time_in_mode")  # their truth can change after a set_mode earlier in the list
+
+
+def _key(cond: dict) -> str:
+    return json.dumps(cond, sort_keys=True)
+
+
+def _contradiction(conds: list[dict]) -> str | None:
+    """Why these conditions can never all hold at once, or None."""
+    plain = {_key(c) for c in conds if "not" not in c}
+    for c in conds:
+        if "not" in c and _key(c["not"]) in plain:
+            return f"it needs both \"if\" and \"unless\" {c['not']['sensor'].replace('_', ' ')}"
+    bounds: dict[str, list] = {}  # sensor + params -> [low, low inclusive, high, high inclusive]
+    for c in conds:
+        neg = "not" in c
+        base = c["not"] if neg else c
+        if SENSORS.get(base.get("sensor")) is None or SENSORS[base["sensor"]].kind != "number":
+            continue
+        k = _key({x: v for x, v in base.items() if x not in ("op", "value")})
+        b = bounds.setdefault(k, [-math.inf, False, math.inf, False])
+        upper = (base["op"] == "<") != neg  # "x < v" or "unless x > v" bound x from above
+        v, inclusive = base["value"], neg
+        if upper and (v < b[2] or (v == b[2] and not inclusive)):
+            b[2], b[3] = v, inclusive
+        if not upper and (v > b[0] or (v == b[0] and not inclusive)):
+            b[0], b[1] = v, inclusive
+        if b[0] > b[2] or (b[0] == b[2] and not (b[1] and b[3])):
+            return f"no value of {base['sensor'].replace('_', ' ')} fits all its limits"
+    return None
+
+
+def analyze(spec: dict) -> dict:
+    """Rule numbers per channel in priority order, plus warnings about rules that can't matter.
+    Each warning: {"kind", "rules": [numbers] (or [None]), "message"}; shadowing ones add "by"."""
+    rules = spec.get("rules", [])
+    channel = [ACTIONS[r["then"]["action"]].channel for r in rules]
+    groups = {ch: [i + 1 for i, c in enumerate(channel) if c == ch] for ch in CHANNEL_NAMES}
+    warnings: list[dict] = []
+    conds = [r.get("if", []) for r in rules]
+    keys = [{_key(c) for c in cs} for cs in conds]
+    dead: set[int] = set()
+    for i, rule in enumerate(rules):
+        why = _contradiction(conds[i])
+        if why:
+            dead.add(i)
+            warnings.append({"kind": "contradiction", "rules": [i + 1],
+                             "message": f"Rule {i + 1} can never run: {why}."})
+    for i, rule in enumerate(rules):
+        act = ACTIONS[rule["then"]["action"]]
+        if i in dead or act.can_fail or any(SENSORS[_base(c)["sensor"]].kind == "percent" for c in conds[i]):
+            continue  # it may not act even when its conditions hold, so it hides nothing
+        mode_dependent = any(_base(c)["sensor"] in MODE_SENSORS for c in conds[i])
+        shadowed = []
+        for j in range(i + 1, len(rules)):
+            if channel[j] != channel[i] or j in dead or not keys[i] <= keys[j]:
+                continue
+            switch_between = any(channel[k] == "mode" for k in range(i + 1, j))
+            if mode_dependent and switch_between:
+                continue  # the mode can change between the two rules
+            shadowed.append(j)
+        if shadowed:
+            dead.update(shadowed)
+            many = len(shadowed) > 1
+            names = ", ".join(str(j + 1) for j in shadowed)
+            them = "them" if many else "it"
+            cause = "always matches first" if not conds[i] else f"matches whenever {'they' if many else 'it'} would"
+            warnings.append({"kind": "shadowed", "rules": [j + 1 for j in shadowed], "by": i + 1,
+                             "message": f"Rule{'s' if many else ''} {names} never run{'' if many else 's'}: rule {i + 1}, "
+                                        f"above {them} in {CHANNEL_NAMES[channel[i]].capitalize()}, {cause}."})
+    if not groups["move"]:
+        warnings.append({"kind": "no_move", "rules": [None], "message": "Your bot has no move rules, so it never moves."})
+    if not groups["ability"]:
+        warnings.append({"kind": "no_ability", "rules": [None],
+                         "message": "Your bot has no ability rules, so it never shoots or dashes."})
+    return {"groups": groups, "warnings": warnings}
+
+
+def _base(cond: dict) -> dict:
+    return cond["not"] if "not" in cond else cond
 
 
 # ---- the bot -------------------------------------------------------------------

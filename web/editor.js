@@ -4,6 +4,7 @@
 /* global Blockly */
 import { copyShareLink, toast } from "./share.js";
 import { setupBuildPanels } from "./panels.js";
+import { renderExplain } from "./explain.js";
 import { ACTION_TEXT, SENSOR_TEXT, pretty } from "./labels.js";
 import { Renderer } from "./render.js";
 
@@ -240,6 +241,8 @@ function onChange() {
     const text = JSON.stringify(spec);
     const errors = JSON.parse(ctx.api.check_bot(text));
     showProblems([...problems, ...errors]);
+    const report = problems.length || errors.length ? { error: "problems" } : JSON.parse(ctx.api.analyze_bot(text));
+    renderExplain($("ed-explain-body"), $("ed-explain-count"), spec, report);
     try { localStorage.setItem("mirrormatch.draft", text); } catch { /* storage unavailable */ }
   }, 250);
 }

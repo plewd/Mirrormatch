@@ -266,3 +266,76 @@ def test_session_snapshot_carries_decision_traces():
     assert right["kind"] == "other"
     human = json.loads(Session(HUMAN, "bots/leader.json", seed=1).advance(3))["debug"]
     assert human[0] is None and human[1]["kind"] == "rules"
+
+
+# ---- explain my bot (analyze) ---------------------------------------------------
+
+def spec_of(*rules):
+    return {"name": "t", "version": 1, "rules": [{"if": conds, "then": then} for conds, then in rules]}
+
+
+THREAT = {"sensor": "threatened"}
+NEAR = {"sensor": "enemy_distance", "op": "<", "value": 300}
+
+
+def kinds(report):
+    return sorted((w["kind"], w["rules"][0]) for w in report["warnings"])
+
+
+def test_analyze_groups_rules_by_channel_in_priority_order():
+    from arena.bots.rules import analyze
+
+    r = analyze(spec_of(([THREAT], {"action": "strafe"}), ([], {"action": "shoot", "aim": "lead"}),
+                    ([], {"action": "set_mode", "mode": "aggressive"}), ([], {"action": "approach"})))
+    assert r["groups"] == {"move": [1, 4], "ability": [2], "mode": [3]}
+
+
+def test_an_always_acting_rule_shadows_later_rules_with_the_same_or_more_conditions():
+    from arena.bots.rules import analyze
+
+    r = analyze(spec_of(([THREAT], {"action": "strafe"}),
+                    ([THREAT, NEAR], {"action": "retreat"}),        # never: rule 1 covers it
+                    ([NEAR], {"action": "approach"}),               # fine: rule 1 doesn't always match then
+                    ([], {"action": "hold"}),
+                    ([], {"action": "wander"})))                    # never: rule 4 always acts
+    shadow = [w for w in r["warnings"] if w["kind"] == "shadowed"]
+    assert [(w["by"], w["rules"]) for w in shadow] == [(1, [2]), (4, [5])]
+    assert "rule 1" in shadow[0]["message"]
+
+
+def test_rules_that_can_fall_through_or_roll_dice_shadow_nothing():
+    from arena.bots.rules import analyze
+
+    r = analyze(spec_of(([], {"action": "shoot", "aim": "lead"}),       # can't happen on cooldown: falls through
+                    ([], {"action": "use_item", "aim": "lead"}),
+                    ([{"sensor": "chance", "value": 30}], {"action": "approach"}),  # rolls every decision
+                    ([], {"action": "hold"})))
+    assert not [w for w in r["warnings"] if w["kind"] == "shadowed"]
+
+
+def test_mode_conditions_dont_shadow_across_a_mode_switch():
+    from arena.bots.rules import analyze
+
+    aggressive = {"sensor": "in_mode", "mode": "aggressive"}
+    r = analyze(spec_of(([aggressive], {"action": "approach"}),
+                    ([], {"action": "set_mode", "mode": "aggressive"}),
+                    ([aggressive], {"action": "retreat"})))         # the mode may have changed in between
+    assert not [w for w in r["warnings"] if w["kind"] == "shadowed"]
+
+
+def test_contradictions_and_missing_channels():
+    from arena.bots.rules import analyze
+
+    far = {"sensor": "enemy_distance", "op": ">", "value": 500}
+    r = analyze(spec_of(([NEAR, far], {"action": "approach"}),                   # < 300 and > 500
+                    ([THREAT, {"not": THREAT}], {"action": "strafe"}),        # if X and unless X
+                    ([NEAR, {"not": {**NEAR, "value": 200}}], {"action": "retreat"})))  # 200 <= d < 300: fine
+    assert kinds(r) == [("contradiction", 1), ("contradiction", 2), ("no_ability", None)]
+    assert analyze(spec_of(([], {"action": "shoot", "aim": "lead"})))["warnings"][0]["kind"] == "no_move"
+
+
+def test_starter_bots_have_no_warnings():
+    from arena.bots.rules import analyze
+
+    for path in sorted(BOTS_DIR.glob("*.json")):
+        assert analyze(json.loads(path.read_text()))["warnings"] == [], path.name

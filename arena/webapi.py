@@ -13,7 +13,7 @@ import pathlib
 
 from arena.bots import make_bot
 from arena.bots.common import incoming_threat
-from arena.bots.rules import RuleBot, RuleError, validate
+from arena.bots.rules import RuleBot, RuleError, analyze, validate
 from arena.config import DEFAULT_CONFIG, DIFFICULTIES
 from arena.controller import Controller
 from arena.fairness import FairController
@@ -59,6 +59,13 @@ def check_bot(spec_json: str) -> str:
     except json.JSONDecodeError as exc:
         return json.dumps([f"not valid JSON: {exc}"])
     return json.dumps(validate(spec, CONFIG))
+
+
+def analyze_bot(spec_json: str) -> str:
+    """'Explain my bot': rule groups and warnings (JSON), or {"error": ...} for an invalid spec."""
+    spec = json.loads(spec_json)
+    errors = validate(spec, CONFIG)
+    return json.dumps({"error": errors[0]} if errors else analyze(spec))
 
 
 REPLAY_VERSION = 1

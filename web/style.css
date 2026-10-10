@@ -456,3 +456,24 @@ html.locked, html.locked body { overflow: hidden; overscroll-behavior: none; }
 #toast[hidden] { display: none; }
 #toast input { font: 12px ui-monospace, monospace; color: var(--text); background: var(--bg); border: 1px solid var(--line);
                border-radius: 6px; padding: 6px 8px; width: 100%; }
+
+/* Build: the collapsed "What your bot does" panel. */
+.explain { padding: 0; gap: 0; }
+.explain > summary { cursor: pointer; list-style: none; padding: 10px 12px; font-weight: 600; font-size: 13px; }
+.explain > summary::-webkit-details-marker { display: none; }
+.explain > summary::before { content: "▸"; display: inline-block; width: 14px; color: var(--dim); transition: transform 0.15s; }
+.explain[open] > summary::before { transform: rotate(90deg); }
+.explain-count { font-weight: 500; color: var(--dim); }
+.explain-count.bad { color: var(--gold); }
+#ed-explain-body { padding: 0 12px 12px; font-size: 13px; }
+#ed-explain-body .hint { margin: 4px 0 6px; }
+.explain-warnings { margin: 2px 0 8px; padding-left: 18px; color: var(--gold); }
+.explain-warnings li { margin: 3px 0; }
+.explain-head { margin: 10px 0 4px; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; }
+.explain-head.move { color: var(--move-text); }
+.explain-head.ability { color: var(--ability-text); }
+.explain-head.mode { color: var(--mode-text); }
+.explain-rules { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+.explain-rules li { display: flex; gap: 8px; line-height: 1.4; }
+.explain-num { flex: 0 0 18px; color: var(--dim); text-align: right; font-variant-numeric: tabular-nums; }
+.explain-rules li.dead { opacity: 0.5; text-decoration: line-through; }
